@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:latest
+    container_name: my_redis_2
+    restart: unless-stopped
+    volumes:
+      - /home/mika/REDIS_DATA_DOCKERS:/data
+    ports:
+      - "6380:6379"
+    command: ["redis-server", "--save", "20 1", "--loglevel", "warning"]
+    networks:
+      - my_network
+
+  flask:
+    build: .
+    container_name: my_flask
+    restart: unless-stopped
+    ports:
+      - "5001:5000"
+    environment:
+      - REDIS_HOST=my_redis_2
+      - REDIS_PORT=6379 # use container INTERNAL port
+    depends_on:
+      - redis
+    networks:
+      - my_network
+
+networks:
+    my_network:
+      driver: bridge

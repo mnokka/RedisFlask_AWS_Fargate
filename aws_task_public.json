@@ -1,0 +1,85 @@
+{
+  "family": "redis-flask-app",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/my-ecs-execution-role",
+  "containerDefinitions": [
+    {
+      "name": "redis",
+      "image": "ACCOUNT_ID.dkr.ecr.eu-north-1.amazonaws.com/redis-repo:latest",
+      "cpu": 256,
+      "memory": 512,
+      "portMappings": [
+        {
+          "containerPort": 6379,
+          "hostPort": 6379,
+          "protocol": "tcp"
+        }
+      ],
+      "command": [
+        "redis-server",
+        "--save",
+        "20",
+        "1",
+        "--loglevel",
+        "warning"
+      ],
+      "mountPoints": [
+        {
+          "sourceVolume": "redis-data",
+          "containerPath": "/data"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/my-cluster",
+          "awslogs-region": "eu-north-1",
+          "awslogs-stream-prefix": "redis"
+        }
+      },
+      "systemControls": []
+    },
+    {
+      "name": "flask",
+      "image": "ACCOUNT_ID.dkr.ecr.eu-north-1.amazonaws.com/flask-repo:latest",
+      "cpu": 256,
+      "memory": 512,
+      "portMappings": [
+        {
+          "containerPort": 5000,
+          "hostPort": 5000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "REDIS_HOST",
+          "value": "redis"
+        },
+        {
+          "name": "REDIS_PORT",
+          "value": "6379"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/my-cluster",
+          "awslogs-region": "eu-north-1",
+          "awslogs-stream-prefix": "flask"
+        }
+      },
+      "systemControls": []
+    }
+  ],
+  "volumes": [
+    {
+      "name": "redis-data"
+    }
+  ]
+}
